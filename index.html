@@ -15,7 +15,7 @@
   <div id="welcomePage" class="page slide-in">
     <h2 class="fade-slide-in" style="color: #fff;">🎯 TARGET PLUS LIBRARY</h2>
     <h4 class="fade-slide-in" style="color: #4d4747;">&nbsp;&nbsp;<img style="height: 15px;width: 20px;" src="lord-shiva.png" alt=""></a>MAHADEV BOYS HOSTEL</h4>
-    <button class="fade-slide-in" onclick="goToNextPage()">Next</button>
+    <button class="fade-slide-in" onclick="goToNextPage()" style="background-color: #00b894;">Next</button>
   </div>
 
   <div id="mainContainer" class="main-screen hidden">
@@ -32,8 +32,8 @@
   <input type="text" id="studentId" placeholder="Enter your Reg.No">
 
   <div class="button-row">
-    <button onclick="showAttendancePage()">Mark Attendance</button>
-    <button class="history-btn" onclick="showHistorySection()">Show History</button>
+     <button onclick="showAttendancePage()" style="background-color: #27ae60;">Mark Attendance</button>
+    <button class="history-btn" onclick="showHistorySection()" style="background-color: #0984e3;">Show History</button>
   </div>
 
   <div id="submitMsg" class="status info">Please enter ID to proceed.</div>
@@ -48,7 +48,7 @@
       <input type="text" id="idBox" placeholder="Enter your Reg.No" disabled>
       <button style="background-color: green" onclick="submitAttendance('IN')" disabled id="inBtn">📥 Check IN</button>
       <button style="background-color: red" onclick="submitAttendance('OUT')" disabled id="outBtn">📤 Check OUT</button>
-      <button onclick="goBackToMain()">⬅️ Back</button>
+     <button onclick="goBackToMain()" style="background-color: #e17055; width: 290px;">⬅️ Back</button>
     </div>
 
     <!-- History Section -->
@@ -64,8 +64,8 @@
     <input type="date" id="dateInput" class="date-input">
   </div>
 
-  <button onclick="filterByDate()">Show Attendance</button>
-  <button onclick="goBackToMain()">⬅️ Back</button>
+   <button onclick="filterByDate()" style="background-color: #6c5ce7; padding: 11.5px;">Show Attendance</button>
+  <button onclick="goBackToMain()" style="background-color: #d63031; width: 150px;padding: 11px;">⬅️ Back</button>
   <button style="background-color: hsl(192, 87%, 49%);" onclick="goToExtraPage()">📚 Library/PG Info</button>
 
   <p id="latestDate" class="latest-date-info"> <span style="color:#1b7c94;"></span></p>
@@ -101,7 +101,7 @@
       <p style=" font-size: 15px;"><span style="color: #ff009d; font-size: 21px;  font-weight: 700;">Mahadev Boys Hostel</span> provides comfortable and hygienic PG accommodations close to colleges. Power backup, water facility, and mess included.</p>
       </div>
       <a href="https://sunildhawan12.github.io/Adimn-p/"_blank" class="admin-panel-link">🛠 Admin Panel</a>
-      <button style="background:  hsl(192, 87%, 49%);" onclick="goBackToMain()">⬅️ Back</button>
+      <button style="background: #d63031;" onclick="goBackToMain()">⬅️ Back</button>
         <a href="https://api.whatsapp.com/send?phone=918302655926" target="_blank">
       <button class="support-btn">💬 Support / Help</button></a>
       
