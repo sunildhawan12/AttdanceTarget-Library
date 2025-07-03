@@ -103,7 +103,7 @@ async function submitAttendance(status) {
   }
 
   loading.style.display = "block";
-  msg.innerHTML = "⏳ Location verify ...";
+  msg.innerHTML = "Please Wait...";
 
   if (!navigator.geolocation) {
     msg.innerHTML = "❌ Location not supported.";
