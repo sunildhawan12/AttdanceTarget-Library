@@ -12,9 +12,9 @@ const studentMap = {
   "107": { name: "Aunj" },
   "109": { name: "Sajna" },
   "501": { name: "Sunil" },
-  "502": { name: "Ramniwas" },
-  "503": { name: "Ram" },
-  "504": { name: "Raman" },
+  "506": { name: "kana Ram" },
+  "420": { name: "Susheel" },
+  "469": { name: "Mahendra Gahlot" },
 };
 
 let attendanceCache = {};
