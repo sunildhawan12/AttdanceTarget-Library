@@ -178,7 +178,7 @@ function renderHistoryTable(data) {
 
   historyTableBody.innerHTML += `
     <tr style="background: ${index === 0 ? 'rgba(117, 197, 235, 0.72)' : 'white'}; border: 1px solid black;">
-      <td style="border: 1px solid black;">${e.name}<br>${maskedPhone}</td>
+      <td style="border: 1px solid black;"><b style="color:rgb(77, 6, 243);">${e.name}</b></br>${maskedPhone}</td>
       <td style="border: 1px solid black;">${e.date}</td>
       <td style="border: 1px solid black;">${e.time}</td>
       <td style="border: 1px solid black;">${icon} ${e.status}</td>
