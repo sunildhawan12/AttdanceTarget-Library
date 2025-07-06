@@ -3,9 +3,10 @@
   const radius = 0.05;
 
   const studentMap = {
-   "101": "sunil",
+   "101": "Sunil",
+    "102": "Arjun Ram",
     "469": "Mahendra Gahlot",
-    "420": "Sushil",
+    "420": "Rahul Rawat",
     "506": "kana ram",
     "423": "Ramniwash",
     "105": "Jagdish kasaniyan",
