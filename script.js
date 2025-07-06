@@ -55,11 +55,11 @@
         document.getElementById("inBtn").disabled = false;
         document.getElementById("outBtn").disabled = false;
       } else {
-        statusMsg.innerHTML = `❌ Location mismatch (Distance: ${dist.toFixed(3)} km)`;
+        statusMsg.innerHTML = `❌ आप निर्धारित क्षेत्र से बाहर हैं! (Distance: ${dist.toFixed(3)} km)`;
       }
     }, err => {
-      if (err.code === 1) statusMsg.innerHTML = "❌ Permission denied. Please allow location.";
-      else statusMsg.innerHTML = `❌ Error: ${err.message}`;
+      if (err.code === 1) statusMsg.innerHTML = "❌ Location प्राप्त नहीं हो सकी!.";
+      else statusMsg.innerHTML = `❌ आपका ब्राउज़र लोकेशन सपोर्ट नहीं करता!: ${err.message}`;
     });
   }
 
@@ -96,7 +96,7 @@
           })
           .catch(err => {
             console.error("History fetch error:", err);
-            alert("❌ इतिहास लोड नहीं हो पाया!");
+            alert("❌ History लोड नहीं हो पाया!");
           });
       }, 1000);
     })
@@ -114,39 +114,36 @@ function showHistory() {
   const id = localStorage.getItem("regId");
   if (!id) return;
 
-  fetch(`${historyUrl}?type=history&id=${id}`)
-    .then(res => res.json())
-    .then(data => {
-      const hb = document.getElementById("historyTableBody");
-      hb.innerHTML = "";
-      if (!Array.isArray(data) || data.length === 0) {
-        hb.innerHTML = "<tr><td colspan='4'>कोई उपस्थिति इतिहास नहीं मिला।</td></tr>";
-      } else {
-        data.reverse(); // नई एंट्री ऊपर दिखाने के लिए
+  const hb = document.getElementById("historyTableBody");
+  const loaderDiv = document.getElementById("loaderMsg");
 
-        data.forEach((e, i) => {
-          const maskedPhone = e.phone.replace(/^(\d{2})\d{4}(\d{3})$/, "$1****$2");
-          const icon = e.status === "IN" ? "🟢" : "🔴";
-          const isNew = i === 0 ? "style='background:#d1ffd6'" : "";
+  // ✅ Show message below "Create Account" button
+  loaderDiv.innerHTML = ` <span class="spinner" ></span> कृपया प्रतीक्षा करें...`;
 
-          hb.innerHTML += `
-            <tr ${isNew}>
-              <td>${e.name} / ${maskedPhone}</td>
-              <td>${e.date}</td>
-              <td>${e.time}</td>
-              <td>${icon} ${e.status}</td>
-            </tr>`;
-        });
-      }
-      document.getElementById("historyModal").style.display = "flex";
-    })
-    .catch(err => {
-      console.error("इतिहास लोड करने में त्रुटि:", err);
-      alert("❌ इतिहास लोड करने में विफल!");
-    });
+  // Also show inside table as fallback
+  hb.innerHTML = `
+    <tr>
+      <td colspan="4" style="text-align:center;">
+        <span class="spinner" ></span> कृपया प्रतीक्षा करें...
+      </td>
+    </tr>`;
+
+  document.getElementById("historyModal").style.display = "flex";
+
+  setTimeout(() => {
+    fetch(`${historyUrl}?type=history&id=${id}`)
+      .then(res => res.json())
+      .then(data => {
+        loaderDiv.innerHTML = ""; // ✅ Clear message after load
+        renderHistoryTable(data);
+      })
+      .catch(err => {
+        console.error("इतिहास लोड करने में त्रुटि:", err);
+        loaderDiv.innerHTML = "❌ इतिहास लोड करने में त्रुटि हुई!";
+        hb.innerHTML = "<tr><td colspan='4'>❌ इतिहास लोड करने में विफल!</td></tr>";
+      });
+  }, 1000);
 }
-
-
 
 // ✅ Helper function सबसे ऊपर डालें
 function convertToInputFormat(dateStr) {
@@ -173,15 +170,16 @@ function renderHistoryTable(data) {
   }
 
   filtered.forEach((e, index) => {
-    const icon = e.status === "IN" ? "🟢" : "🔴";
-    const maskedPhone = e.phone.replace(/^(\d{2})\d{4}(\d{4})$/, "$1****$2");
+  const icon = e.status === "IN" ? "🟢" : "🔴";
+  const maskedPhone = e.phone.replace(/^(\d{2})\d{4}(\d{4})$/, "$1****$2");
 
-    hb.innerHTML += `
-      <tr style="background: ${index === 0 ? 'rgba(117, 197, 235, 0.72);' : 'white'};">
-        <td>${e.name}/${maskedPhone}</td>
-        <td>${e.date}</td>
-        <td>${e.time}</td>
-        <td>${icon} ${e.status}</td>
-      </tr>`;
-  });
+  historyTableBody.innerHTML += `
+    <tr style="background: ${index === 0 ? 'rgba(117, 197, 235, 0.72)' : 'white'}; border: 1px solid black;">
+      <td style="border: 1px solid black;">${e.name}<br>${maskedPhone}</td>
+      <td style="border: 1px solid black;">${e.date}</td>
+      <td style="border: 1px solid black;">${e.time}</td>
+      <td style="border: 1px solid black;">${icon} ${e.status}</td>
+    </tr>`;
+})
 }
+;
