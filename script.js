@@ -3,11 +3,13 @@
   const radius = 0.05;
 
   const studentMap = {
-    "101": "Rahul",
+   "101": "sunil",
     "469": "Mahendra Gahlot",
-    "103": "Sushil",
-    "104": "Priya",
-    "105": "Anjali"
+    "420": "Sushil",
+    "506": "kana ram",
+    "423": "Ramniwash",
+    "105": "Jagdish kasaniyan",
+    "106": "Mahender pg"
   };
 
   const URL = "https://script.google.com/macros/s/AKfycbzhR-60-AUw2gL6_8ro7Dm3arl0exFNJ0a3n0MYPE-r-s4YwLrJDkJsT31mYk9LqqG92g/exec";
@@ -55,7 +57,7 @@
         document.getElementById("inBtn").disabled = false;
         document.getElementById("outBtn").disabled = false;
       } else {
-        statusMsg.innerHTML = `❌ आप निर्धारित क्षेत्र से बाहर हैं! (Distance: ${dist.toFixed(3)} km)`;
+        statusMsg.innerHTML = `❌ आप Library क्षेत्र से बाहर हैं! (Distance: ${dist.toFixed(3)} km)`;
       }
     }, err => {
       if (err.code === 1) statusMsg.innerHTML = "❌ Location प्राप्त नहीं हो सकी!.";
@@ -71,7 +73,8 @@
   const timeStr = now.toLocaleTimeString();
 
   // तुरंत मैसेज दिखाएं
-  statusMsg.innerHTML = `✅ आपकी "${status}" उपस्थिति दर्ज की गई है - समय:<br> ⏰${timeStr}`;
+  const icon = status === "IN" ? "🟢" : "🔴";
+statusMsg.innerHTML = `✅ आपकी "${icon} <b>${status}</b>" उपस्थिति दर्ज की गई है - समय:<br> ⏰${timeStr}`;
 
   const formData = new URLSearchParams({
     ID: id,
