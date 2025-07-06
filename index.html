@@ -82,22 +82,18 @@
     ">
 
     <div style="overflow-x: auto;">
-      <table style="
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 14px;
-        border: 1px solid #ddd;
-      ">
+      <table style="width: 100%; border-collapse: collapse; border: 2px solid black;">
         <thead>
-          <tr style="background: #eeeb59; border-bottom: 2px solid #ccc;">
-            <th style="padding: 10px; border: 1px solid #ccc;">Name/Phone</th>
-            <th style="padding: 10px; border: 1px solid #ccc;">📅Date</th>
-            <th style="padding: 10px; border: 1px solid #ccc;">Time</th>
-            <th style="padding: 10px; border: 1px solid #ccc;">Status</th>
+          <tr  style="background: #eeeb59; border: 1px solid black;">
+            <th style="padding: 10px; border: 1px solid black;">Name/Phone</th>
+            <th style="padding: 10px; border: 1px solid black;">📅Date</th>
+            <th style="padding: 10px; border: 1px solid black;">Time</th>
+            <th style="padding: 10px; border: 1px solid black;">Status</th>
           </tr>
         </thead>
-        <tbody id="historyTableBody"></tbody>
+        <tbody style="border: 1px solid black;" id="historyTableBody"></tbody>
       </table>
+     
     </div>
 
     <button onclick="document.getElementById('historyModal').style.display='none'" style="
