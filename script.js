@@ -50,7 +50,7 @@
 
   function checkLocation(id) {
     statusMsg.innerHTML = "📡 Checking location...";
-    if (!navigator.geolocation) return statusMsg.innerHTML = "❌ Location not supported.";
+    if (!navigator.geolocation) return statusMsg.innerHTML = "❌  आपका ब्राउज़र लोकेशन सपोर्ट नहीं करता.!";
     navigator.geolocation.getCurrentPosition(pos => {
       const dist = getDistance(pos.coords.latitude, pos.coords.longitude, allowedLat, allowedLng);
       if (dist <= radius) {
