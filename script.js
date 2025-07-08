@@ -7,36 +7,22 @@ const radius = 0.05;
 const studentMap = {
   "101": "Sunil",
   "102": "Arjun Ram",
+  "103": "Suheel",
+  "104": "Rajesh",
+  "105": "Jagdish kasaniyan",
+  "106": "Mahender pg",
+  "107": "Rajveer",
+  "108": "Abhi",
+  "109": "Manish",
   "469": "Mahendra Gahlot",
   "420": "Rahul Rawat",
   "506": "kana ram",
   "423": "Ramniwash",
-  "105": "Jagdish kasaniyan",
-  "106": "Mahender pg",
-  "103": "Suheel",
-  "104": "Rajesh",
 };
-
 const URL = "https://script.google.com/macros/s/AKfycbzhR-60-AUw2gL6_8ro7Dm3arl0exFNJ0a3n0MYPE-r-s4YwLrJDkJsT31mYk9LqqG92g/exec";
 const historyUrl = "https://script.google.com/macros/s/AKfycbwYMb6IVNNSVO6E70ujDfO3x1x7G2sZX44X37MpTFiuBGysDNScXmsbZxuZUv-qJfXA/exec";
 
 const statusMsg = document.getElementById("statusMsg");
-
-window.onload = () => {
-  const savedId = localStorage.getItem("regId");
-  if (savedId && studentMap[savedId]) {
-    document.getElementById("loginSection").style.display = "none";
-    document.getElementById("attendanceSection").style.display = "block";
-    checkLocation(savedId);
-  }
-
-  setInterval(() => {
-    const id = localStorage.getItem("regId");
-    if (id && studentMap[id]) {
-      checkLocation(id);
-    }
-  }, 60000);
-};
 
 function saveAndProceed() {
   const id = document.getElementById("regInput").value.trim();
@@ -86,18 +72,19 @@ function checkLocation(id) {
         const timeStr = localStorage.getItem("firstInTime") || "पहले";
         statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी उपस्थिति पहले ही ⏰${timeStr} पर दर्ज की जा चुकी है।`;
       }
-    } else {
-      if (localStorage.getItem("attendanceStatus") === "IN") {
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString();
-        localStorage.setItem("attendanceStatus", "OUT");
+    }else {
+  const lastInDate = localStorage.getItem("lastInDate");
+  if (localStorage.getItem("attendanceStatus") === "IN" && lastInDate === today) {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString();
+    localStorage.setItem("attendanceStatus", "OUT");
 
-        statusMsg.innerHTML = `❌ <b>${name}</b>, आप Library क्षेत्र से बाहर आ गए हैं!<br>🔴 आपकी \"OUT\" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}`;
-        markAttendanceSilent("OUT");
-      } else {
-        statusMsg.innerHTML = `❌ आप Library क्षेत्र के बाहर हैं।`;
-      }
-    }
+    statusMsg.innerHTML = `❌ <b>${name}</b>, आप Library क्षेत्र से बाहर आ गए हैं!<br>🔴 आपकी "OUT" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}`;
+    markAttendanceSilent("OUT");
+  } else {
+    statusMsg.innerHTML = `❌ आप Library क्षेत्र के बाहर हैं,<br>लेकिन आपकी "IN" उपस्थिति नहीं मिली इसलिए "OUT" नहीं की गई।`;
+  }
+}
   }, err => {
     statusMsg.innerHTML = `❌ Error: ${err.message}`;
   });
@@ -124,24 +111,32 @@ function markAttendanceSilent(status) {
     })
     .catch(err => console.error("❌ IN fetch error:", err));
 }
-
 function manualOut() {
   const id = localStorage.getItem("regId");
   if (!id) return;
 
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString();
   const name = studentMap[id];
+  const today = new Date().toLocaleDateString("en-GB");
+  const lastInDate = localStorage.getItem("lastInDate");
 
-  if (localStorage.getItem("attendanceStatus") === "OUT") {
-    statusMsg.innerHTML = `⚠️ <b>${name}</b>, आप पहले ही \"OUT\" हो चुके हैं।`;
+  // ✅ OUT तभी मान्य जब आज IN किया हो
+  if (lastInDate !== today || localStorage.getItem("attendanceStatus") !== "IN") {
+    statusMsg.innerHTML = `⚠️ <b>${name}</b>, आपकी "IN" उपस्थिति नहीं मिली है। पहले IN करें फिर OUT करें।`;
     return;
   }
 
-  statusMsg.innerHTML = `🔴 आप Manual रूप से \"OUT\" हो गए हैं!<br>🔴 आपकी \"OUT\" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}`;
+  if (localStorage.getItem("attendanceStatus") === "OUT") {
+    statusMsg.innerHTML = `⚠️ <b>${name}</b>, आप पहले ही "OUT" हो चुके हैं।`;
+    return;
+  }
+
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString();
+  statusMsg.innerHTML = `🔴 आप Manual रूप से "OUT" हो गए हैं!<br>🔴 आपकी "OUT" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}`;
   localStorage.setItem("attendanceStatus", "OUT");
   markAttendanceSilent("OUT");
 }
+
 
 function maskPhone(phone) {
   if (!phone || phone.length < 4) return phone;
