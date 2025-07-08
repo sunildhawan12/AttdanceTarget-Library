@@ -1,4 +1,4 @@
-// ✅ Optimized & Cleaned Auto Attendance Script with Manual OUT Button
+// ✅ Optimized Auto Attendance with Fixed IN Display Time & Instant History Update
 
 const allowedLat = 26.486691442317298;
 const allowedLng = 74.63343361051672;
@@ -27,13 +27,12 @@ window.onload = () => {
   if (savedId && studentMap[savedId]) {
     document.getElementById("loginSection").style.display = "none";
     document.getElementById("attendanceSection").style.display = "block";
-    statusMsg.innerHTML = "📡 Location check हो रही है...";
     checkLocation(savedId);
   }
+
   setInterval(() => {
     const id = localStorage.getItem("regId");
     if (id && studentMap[id]) {
-      statusMsg.innerHTML = "📡 Location check हो रही है...";
       checkLocation(id);
     }
   }, 60000);
@@ -45,7 +44,6 @@ function saveAndProceed() {
   localStorage.setItem("regId", id);
   document.getElementById("loginSection").style.display = "none";
   document.getElementById("attendanceSection").style.display = "block";
-  statusMsg.innerHTML = "📡 Location check हो रही है...";
   checkLocation(id);
 }
 
@@ -56,92 +54,84 @@ function getDistance(lat1, lon1, lat2, lon2) {
   const a =
     Math.sin(dLat / 2) ** 2 +
     Math.cos(lat1 * Math.PI / 180) *
-      Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon / 2) ** 2;
+    Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
 
 function checkLocation(id) {
-  navigator.geolocation.getCurrentPosition(
-    pos => handlePosition(pos.coords.latitude, pos.coords.longitude, id),
-    err => (statusMsg.innerHTML = `❌ Error: ${err.message}`),
-    { enableHighAccuracy: false, timeout: 5000, maximumAge: 10000 }
-  );
-}
-
-function handlePosition(lat, lng, id) {
-  const dist = getDistance(lat, lng, allowedLat, allowedLng);
-  const name = studentMap[id];
-  const today = new Date().toLocaleDateString("en-GB");
-
-  if (dist <= radius) {
-    if (localStorage.getItem("attendanceStatus") !== "IN") {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString();
-      localStorage.setItem("attendanceStatus", "IN");
-      localStorage.setItem("lastInDate", today);
-      localStorage.setItem("firstInTime", timeStr);
-      statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी \"🟢 <b>IN</b>\" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}`;
-      markAttendanceSilent("IN");
-    } else {
-      const timeStr = localStorage.getItem("firstInTime") || "पहले";
-      statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी उपस्थिति पहले ही ⏰${timeStr} पर दर्ज की जा चुकी है।`;
-    }
-  } else {
-    if (localStorage.getItem("attendanceStatus") === "IN") {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString();
-      localStorage.setItem("attendanceStatus", "OUT");
-      statusMsg.innerHTML = `❌ <b>${name}</b>, आप Library क्षेत्र से बाहर आ गए हैं!<br>🔴 आपकी \"OUT\" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}`;
-      markAttendanceSilent("OUT");
-    } else {
-      statusMsg.innerHTML = `❌ आप Library क्षेत्र के बाहर हैं।`;
-    }
+  statusMsg.innerHTML = "📡 Location check हो रही है...";
+  if (!navigator.geolocation) {
+    statusMsg.innerHTML = "❌ Location supported नहीं है।";
+    return;
   }
+
+  navigator.geolocation.getCurrentPosition(pos => {
+    const dist = getDistance(pos.coords.latitude, pos.coords.longitude, allowedLat, allowedLng);
+    const name = studentMap[id];
+    const today = new Date().toLocaleDateString("en-GB");
+
+    if (dist <= radius) {
+      if (localStorage.getItem("attendanceStatus") !== "IN") {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString();
+        localStorage.setItem("attendanceStatus", "IN");
+        localStorage.setItem("lastInDate", today);
+        localStorage.setItem("firstInTime", timeStr);
+
+        statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी \"🟢 <b>IN</b>\" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}`;
+        markAttendanceSilent("IN");
+      } else {
+        const timeStr = localStorage.getItem("firstInTime") || "पहले";
+        statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी उपस्थिति पहले ही ⏰${timeStr} पर दर्ज की जा चुकी है।`;
+      }
+    } else {
+      if (localStorage.getItem("attendanceStatus") === "IN") {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString();
+        localStorage.setItem("attendanceStatus", "OUT");
+
+        statusMsg.innerHTML = `❌ <b>${name}</b>, आप Library क्षेत्र से बाहर आ गए हैं!<br>🔴 आपकी \"OUT\" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}`;
+        markAttendanceSilent("OUT");
+      } else {
+        statusMsg.innerHTML = `❌ आप Library क्षेत्र के बाहर हैं।`;
+      }
+    }
+  }, err => {
+    statusMsg.innerHTML = `❌ Error: ${err.message}`;
+  });
 }
 
 function markAttendanceSilent(status) {
   const id = localStorage.getItem("regId");
   if (!id) return;
 
-  const today = new Date().toLocaleDateString("en-GB");
   if (status === "IN") {
-    const lastInDate = localStorage.getItem("lastInDate");
-    if (lastInDate === today) return;
-    localStorage.setItem("lastInDate", today);
+    localStorage.setItem("attendanceStatus", "IN");
+    localStorage.setItem("lastInDate", new Date().toLocaleDateString("en-GB"));
   }
 
   const formData = new URLSearchParams({ ID: id, Status: status, Location: "auto" });
   fetch(URL, { method: "POST", body: formData })
     .then(res => {
-      if (!res.ok) {
-        statusMsg.innerHTML += "<br>❌ उपस्थिति दर्ज नहीं हो पाई।";
-        return;
+      console.log(`✅ ${status} request response`, res.ok);
+      if (res.ok && status === "IN") {
+        retryHistoryFetch(0, status);
+      } else if (res.ok && status === "OUT") {
+        showHistory(); // immediate for OUT
       }
-      setTimeout(() => {
-        fetch(`${historyUrl}?type=history&id=${id}`)
-          .then(res => res.json())
-          .then(data => {
-            renderHistoryTable(data);
-            document.getElementById("historyModal").style.display = "flex";
-          })
-          .catch(() => {
-            statusMsg.innerHTML += "<br>❌ इतिहास लोड नहीं हो पाया!";
-          });
-      }, 1000);
     })
-    .catch(() => {
-      statusMsg.innerHTML += "<br>❌ नेटवर्क त्रुटि।";
-    });
+    .catch(err => console.error("❌ IN fetch error:", err));
 }
 
 function manualOut() {
   const id = localStorage.getItem("regId");
   if (!id) return;
-  const name = studentMap[id];
+
   const now = new Date();
   const timeStr = now.toLocaleTimeString();
+  const name = studentMap[id];
 
   if (localStorage.getItem("attendanceStatus") === "OUT") {
     statusMsg.innerHTML = `⚠️ <b>${name}</b>, आप पहले ही \"OUT\" हो चुके हैं।`;
@@ -158,13 +148,13 @@ function maskPhone(phone) {
   return phone.slice(0, 2) + "****" + phone.slice(-4);
 }
 
-let historyData = [];
-
 function showHistory() {
   const id = localStorage.getItem("regId");
   if (!id) return;
+
   const hb = document.getElementById("historyTableBody");
   const loaderDiv = document.getElementById("loaderMsg");
+
   loaderDiv.innerHTML = `<span class="spinner"></span> कृपया प्रतीक्षा करें...`;
   hb.innerHTML = `<tr><td colspan="4" style="text-align:center;"><span class="spinner"></span> कृपया प्रतीक्षा करें...</td></tr>`;
   document.getElementById("historyModal").style.display = "flex";
@@ -181,6 +171,26 @@ function showHistory() {
         hb.innerHTML = "<tr><td colspan='4'>❌ इतिहास लोड करने में विफल!</td></tr>";
       });
   }, 1000);
+}
+function retryHistoryFetch(retry, status) {
+  const id = localStorage.getItem("regId");
+  fetch(`${historyUrl}?type=history&id=${id}`)
+    .then(res => res.json())
+    .then(data => {
+      console.log("📥 retryHistoryFetch", retry, data);
+      const today = new Date().toLocaleDateString("en-GB");
+      if (data.some(e => e.date === today && e.status === status)) {
+        renderHistoryTable(data);
+        document.getElementById("historyModal").style.display = "flex";
+      } else if (retry < 5) {
+        setTimeout(() => retryHistoryFetch(retry + 1, status), 2000);
+      } else {
+        alert(`${status} history update नहीं हुआ, reload करके देखें।`);
+      }
+    })
+    .catch(err => {
+      console.error("❌ retryHistoryFetch error:", err);
+    });
 }
 
 function convertToInputFormat(dateStr) {
@@ -206,7 +216,7 @@ function renderHistoryTable(data) {
 
   filtered.forEach((e, index) => {
     const icon = e.status === "IN" ? "🟢" : "🔴";
-    const maskedPhone = e.phone.replace(/^(.{2})\d{4}(.{4})$/, "$1****$2");
+    const maskedPhone = e.phone.replace(/^(\d{2})\d{4}(\d{4})$/, "$1****$2");
     hb.innerHTML += `
       <tr style="background: ${index === 0 ? 'rgba(117, 197, 235, 0.72)' : 'white'}; border: 1px solid black;">
         <td style="border: 1px solid black;"><b style="color:rgb(77, 6, 243);">${e.name}</b><br>${maskedPhone}</td>
