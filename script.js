@@ -3,14 +3,17 @@
   const radius = 0.05;
 
   const studentMap = {
-   "101": "Sunil",
+    "101": "Sunil",
     "102": "Arjun Ram",
     "469": "Mahendra Gahlot",
     "420": "Rahul Rawat",
     "506": "kana ram",
     "423": "Ramniwash",
     "105": "Jagdish kasaniyan",
-    "106": "Mahender pg"
+    "106": "Mahender pg",
+    "103": "Suheel",
+    "104": "Rajesh",
+
   };
 
   const URL = "https://script.google.com/macros/s/AKfycbzhR-60-AUw2gL6_8ro7Dm3arl0exFNJ0a3n0MYPE-r-s4YwLrJDkJsT31mYk9LqqG92g/exec";
@@ -48,34 +51,55 @@
     return R * c;
   }
 
-  function checkLocation(id) {
-    statusMsg.innerHTML = "📡 Checking location...";
-    if (!navigator.geolocation) return statusMsg.innerHTML = "❌  आपका ब्राउज़र लोकेशन सपोर्ट नहीं करता.!";
-    navigator.geolocation.getCurrentPosition(pos => {
-      const dist = getDistance(pos.coords.latitude, pos.coords.longitude, allowedLat, allowedLng);
-      if (dist <= radius) {
-        statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${studentMap[id]}</b>, आप Library क्षेत्र के अंदर हैं!.`;
-        document.getElementById("inBtn").disabled = false;
-        document.getElementById("outBtn").disabled = false;
-      } else {
-        statusMsg.innerHTML = `❌ आप Library क्षेत्र से बाहर हैं! (Distance: ${dist.toFixed(3)} km)`;
-      }
-    }, err => {
-      if (err.code === 1) statusMsg.innerHTML = "❌ Location प्राप्त नहीं हो सकी!.";
-      else statusMsg.innerHTML = `❌ आपका ब्राउज़र लोकेशन सपोर्ट नहीं करता!: ${err.message}`;
-    });
+ function checkLocation(id) {
+  statusMsg.innerHTML = "📡 Location check हो रही है...";
+  if (!navigator.geolocation) {
+    statusMsg.innerHTML = "❌ Location supported नहीं है।";
+    return;
   }
 
- function markAttendance(status) {
+  navigator.geolocation.getCurrentPosition(pos => {
+    const dist = getDistance(pos.coords.latitude, pos.coords.longitude, allowedLat, allowedLng);
+
+    const name = studentMap[id];
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString();
+
+    if (dist <= radius) {
+      // ✅ INSIDE: Auto IN lagao agar abhi tak IN nahi hai
+      if (localStorage.getItem("attendanceStatus") !== "IN") {
+        statusMsg.innerHTML = `
+          ✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>
+          ✅ आपकी "🟢 <b>IN</b>" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}
+        `;
+        markAttendanceSilent("IN");
+        localStorage.setItem("attendanceStatus", "IN");
+      } else {
+        // Already IN — only show message
+        statusMsg.innerHTML = `✅ Welcome back <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!`;
+      }
+
+    } else {
+      // ❌ OUTSIDE: Auto OUT lagao agar abhi tak OUT nahi hai
+      if (localStorage.getItem("attendanceStatus") === "IN") {
+        statusMsg.innerHTML = `
+          ❌ <b>${name}</b>, आप Library क्षेत्र से बाहर आ गए हैं!<br>
+          🔴 आपकी "OUT" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}
+        `;
+        markAttendanceSilent("OUT");
+        localStorage.setItem("attendanceStatus", "OUT");
+      } else {
+        statusMsg.innerHTML = `❌ आप Library क्षेत्र के बाहर हैं।`;
+      }
+    }
+  }, err => {
+    statusMsg.innerHTML = `❌ Error: ${err.message}`;
+  });
+}
+
+function markAttendanceSilent(status) {
   const id = localStorage.getItem("regId");
   if (!id) return;
-
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString();
-
-  // तुरंत मैसेज दिखाएं
-  const icon = status === "IN" ? "🟢" : "🔴";
-statusMsg.innerHTML = `✅ आपकी "${icon} <b>${status}</b>" उपस्थिति दर्ज की गई है - समय:<br> ⏰${timeStr}`;
 
   const formData = new URLSearchParams({
     ID: id,
@@ -86,26 +110,11 @@ statusMsg.innerHTML = `✅ आपकी "${icon} <b>${status}</b>" उपस्�
   fetch(URL, { method: "POST", body: formData })
     .then(res => {
       if (!res.ok) {
-        statusMsg.innerHTML = "❌ उपस्थिति दर्ज नहीं हो पाई। कृपया फिर से प्रयास करें।";
-        return;
+        statusMsg.innerHTML += "<br>❌ उपस्थिति दर्ज नहीं हो पाई। कृपया फिर से प्रयास करें।";
       }
-
-      // 1 सेकंड बाद इतिहास अपडेट करें
-      setTimeout(() => {
-        fetch(`${historyUrl}?type=history&id=${id}`)
-          .then(res => res.json())
-          .then(data => {
-            renderHistoryTable(data);
-            document.getElementById("historyModal").style.display = "flex";
-          })
-          .catch(err => {
-            console.error("History fetch error:", err);
-            alert("❌ History लोड नहीं हो पाया!");
-          });
-      }, 1000);
     })
     .catch(() => {
-      statusMsg.innerHTML = "❌ नेटवर्क त्रुटि। कृपया इंटरनेट कनेक्शन जांचें।";
+      statusMsg.innerHTML += "<br>❌ नेटवर्क त्रुटि। कृपया कनेक्शन जांचें।";
     });
 }
 
@@ -149,11 +158,13 @@ function showHistory() {
   }, 1000);
 }
 
+
+
 // ✅ Helper function सबसे ऊपर डालें
 function convertToInputFormat(dateStr) {
   // "05-07-2025" → "2025-07-05"
   const parts = dateStr.split("-");
-  if (parts.length !== 3) return "";
+  if (parts.length !== 3) return ""; 
   return `${parts[2]}-${parts[1]}-${parts[0]}`;
 }
 
@@ -186,4 +197,3 @@ function renderHistoryTable(data) {
     </tr>`;
 })
 }
-;
