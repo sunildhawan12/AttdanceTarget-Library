@@ -1,4 +1,4 @@
-// ✅ Optimized Auto Attendance with Fixed IN Display Time & Instant History Update
+// ✅ Optimized Auto Attendance with Fixed IN Display Time & Conditional OUT
 
 const allowedLat = 26.486691442317298;
 const allowedLng = 74.63343361051672;
@@ -14,15 +14,33 @@ const studentMap = {
   "107": "Rajveer",
   "108": "Abhi",
   "109": "Manish",
+  "110": "Manu",
   "469": "Mahendra Gahlot",
   "420": "Rahul Rawat",
   "506": "kana ram",
   "423": "Ramniwash",
 };
+
 const URL = "https://script.google.com/macros/s/AKfycbzhR-60-AUw2gL6_8ro7Dm3arl0exFNJ0a3n0MYPE-r-s4YwLrJDkJsT31mYk9LqqG92g/exec";
 const historyUrl = "https://script.google.com/macros/s/AKfycbwYMb6IVNNSVO6E70ujDfO3x1x7G2sZX44X37MpTFiuBGysDNScXmsbZxuZUv-qJfXA/exec";
 
 const statusMsg = document.getElementById("statusMsg");
+
+window.onload = () => {
+  const savedId = localStorage.getItem("regId");
+  if (savedId && studentMap[savedId]) {
+    document.getElementById("loginSection").style.display = "none";
+    document.getElementById("attendanceSection").style.display = "block";
+    checkLocation(savedId);
+  }
+
+  setInterval(() => {
+    const id = localStorage.getItem("regId");
+    if (id && studentMap[id]) {
+      checkLocation(id);
+    }
+  }, 60000);
+};
 
 function saveAndProceed() {
   const id = document.getElementById("regInput").value.trim();
@@ -45,7 +63,6 @@ function getDistance(lat1, lon1, lat2, lon2) {
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
-
 function checkLocation(id) {
   statusMsg.innerHTML = "📡 Location check हो रही है...";
   if (!navigator.geolocation) {
@@ -72,23 +89,26 @@ function checkLocation(id) {
         const timeStr = localStorage.getItem("firstInTime") || "पहले";
         statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी उपस्थिति पहले ही ⏰${timeStr} पर दर्ज की जा चुकी है।`;
       }
-    }else {
-  const lastInDate = localStorage.getItem("lastInDate");
-  if (localStorage.getItem("attendanceStatus") === "IN" && lastInDate === today) {
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString();
-    localStorage.setItem("attendanceStatus", "OUT");
+    } else {
+      const lastInDate = localStorage.getItem("lastInDate");
+      const status = localStorage.getItem("attendanceStatus");
 
-    statusMsg.innerHTML = `❌ <b>${name}</b>, आप Library क्षेत्र से बाहर आ गए हैं!<br>🔴 आपकी "OUT" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}`;
-    markAttendanceSilent("OUT");
-  } else {
-    statusMsg.innerHTML = `❌ आप Library क्षेत्र के बाहर हैं,<br>लेकिन आपकी "IN" उपस्थिति नहीं मिली इसलिए "OUT" नहीं की गई।`;
-  }
-}
+      if (status === "IN" && lastInDate === today) {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString();
+        localStorage.setItem("attendanceStatus", "OUT");
+
+        statusMsg.innerHTML = `❌ <b>${name}</b>, आप Library क्षेत्र से बाहर आ गए हैं!<br>🔴 आपकी "OUT" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}`;
+        markAttendanceSilent("OUT");
+      } else {
+        statusMsg.innerHTML = `❌ आप Library क्षेत्र के बाहर हैं,<br>लेकिन आपकी "IN" उपस्थिति नहीं मिली इसलिए "OUT" नहीं की गई।`;
+      }
+    }
   }, err => {
     statusMsg.innerHTML = `❌ Error: ${err.message}`;
   });
 }
+
 
 function markAttendanceSilent(status) {
   const id = localStorage.getItem("regId");
@@ -106,10 +126,10 @@ function markAttendanceSilent(status) {
       if (res.ok && status === "IN") {
         retryHistoryFetch(0, status);
       } else if (res.ok && status === "OUT") {
-        showHistory(); // immediate for OUT
+        showHistory();
       }
     })
-    .catch(err => console.error("❌ IN fetch error:", err));
+    .catch(err => console.error("❌ fetch error:", err));
 }
 function manualOut() {
   const id = localStorage.getItem("regId");
@@ -118,30 +138,22 @@ function manualOut() {
   const name = studentMap[id];
   const today = new Date().toLocaleDateString("en-GB");
   const lastInDate = localStorage.getItem("lastInDate");
+  const status = localStorage.getItem("attendanceStatus");
 
-  // ✅ OUT तभी मान्य जब आज IN किया हो
-  if (lastInDate !== today || localStorage.getItem("attendanceStatus") !== "IN") {
+  // ✅ OUT तभी मान्य जब आज IN किया हो और अभी तक OUT ना हुआ हो
+  if (lastInDate !== today || status !== "IN") {
     statusMsg.innerHTML = `⚠️ <b>${name}</b>, आपकी "IN" उपस्थिति नहीं मिली है। पहले IN करें फिर OUT करें।`;
-    return;
-  }
-
-  if (localStorage.getItem("attendanceStatus") === "OUT") {
-    statusMsg.innerHTML = `⚠️ <b>${name}</b>, आप पहले ही "OUT" हो चुके हैं।`;
     return;
   }
 
   const now = new Date();
   const timeStr = now.toLocaleTimeString();
-  statusMsg.innerHTML = `🔴 आप Manual रूप से "OUT" हो गए हैं!<br>🔴 आपकी "OUT" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}`;
   localStorage.setItem("attendanceStatus", "OUT");
+
+  statusMsg.innerHTML = `🔴 आप Manual रूप से "OUT" हो गए हैं!<br>🔴 आपकी "OUT" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}`;
   markAttendanceSilent("OUT");
 }
 
-
-function maskPhone(phone) {
-  if (!phone || phone.length < 4) return phone;
-  return phone.slice(0, 2) + "****" + phone.slice(-4);
-}
 
 function showHistory() {
   const id = localStorage.getItem("regId");
@@ -167,12 +179,12 @@ function showHistory() {
       });
   }, 1000);
 }
+
 function retryHistoryFetch(retry, status) {
   const id = localStorage.getItem("regId");
   fetch(`${historyUrl}?type=history&id=${id}`)
     .then(res => res.json())
     .then(data => {
-      console.log("📥 retryHistoryFetch", retry, data);
       const today = new Date().toLocaleDateString("en-GB");
       if (data.some(e => e.date === today && e.status === status)) {
         renderHistoryTable(data);
@@ -183,9 +195,7 @@ function retryHistoryFetch(retry, status) {
         alert(`${status} history update नहीं हुआ, reload करके देखें।`);
       }
     })
-    .catch(err => {
-      console.error("❌ retryHistoryFetch error:", err);
-    });
+    .catch(err => console.error("❌ retryHistoryFetch error:", err));
 }
 
 function convertToInputFormat(dateStr) {
