@@ -89,21 +89,28 @@ function checkLocation(id) {
         const timeStr = localStorage.getItem("firstInTime") || "पहले";
         statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी उपस्थिति पहले ही ⏰${timeStr} पर दर्ज की जा चुकी है।`;
       }
-    } else {
-      const lastInDate = localStorage.getItem("lastInDate");
-      const status = localStorage.getItem("attendanceStatus");
+    }  else {
+  const lastInDate = localStorage.getItem("lastInDate");
 
-      if (status === "IN" && lastInDate === today) {
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString();
-        localStorage.setItem("attendanceStatus", "OUT");
+  if (
+    localStorage.getItem("attendanceStatus") === "IN" &&
+    lastInDate === today &&
+    dist >= 0.5 // 👉 500 meters condition
+  ) {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString();
+    localStorage.setItem("attendanceStatus", "OUT");
 
-        statusMsg.innerHTML = `❌ <b>${name}</b>, आप Library क्षेत्र से बाहर आ गए हैं!<br>🔴 आपकी "OUT" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}`;
-        markAttendanceSilent("OUT");
-      } else {
-        statusMsg.innerHTML = `❌ आप Library क्षेत्र के बाहर हैं,<br>लेकिन आपकी "IN" उपस्थिति नहीं मिली इसलिए "OUT" नहीं की गई।`;
-      }
-    }
+    statusMsg.innerHTML = `❌ <b>${name}</b>, आप Library क्षेत्र से <b>${dist.toFixed(2)} km</b> दूर हैं!<br>🔴 आपकी "OUT" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}`;
+    markAttendanceSilent("OUT");
+
+  } else if (dist < 0.5) {
+    statusMsg.innerHTML = `⚠️ <b>${name}</b>, आप Library से थोड़ी ही दूरी पर हैं (📏 ${dist.toFixed(2)} km)। OUT तभी लगेगा जब दूरी 0.5 km से ज़्यादा हो।`;
+  } else {
+    statusMsg.innerHTML = `❌ आप Library क्षेत्र के बाहर हैं,<br>लेकिन आपकी "IN" उपस्थिति नहीं मिली इसलिए "OUT" नहीं की गई।`;
+  }
+}
+
   }, err => {
     statusMsg.innerHTML = `❌ Error: ${err.message}`;
   });
