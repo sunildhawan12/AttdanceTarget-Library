@@ -83,7 +83,7 @@ function checkLocation(id) {
         localStorage.setItem("lastInDate", today);
         localStorage.setItem("firstInTime", timeStr);
 
-        statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी \"🟢 <b>IN</b>\" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}`;
+        statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी \"🟢 <b>IN</b>\" उपस्थिति दर्ज की गई है - समय:<br> ⏰${timeStr}`;
         markAttendanceSilent("IN");
       } else {
         const timeStr = localStorage.getItem("firstInTime") || "पहले";
