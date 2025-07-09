@@ -26,21 +26,7 @@ const historyUrl = "https://script.google.com/macros/s/AKfycbwYMb6IVNNSVO6E70ujD
 
 const statusMsg = document.getElementById("statusMsg");
 
-window.onload = () => {
-  const savedId = localStorage.getItem("regId");
-  if (savedId && studentMap[savedId]) {
-    document.getElementById("loginSection").style.display = "none";
-    document.getElementById("attendanceSection").style.display = "block";
-    checkLocation(savedId);
-  }
 
-  setInterval(() => {
-    const id = localStorage.getItem("regId");
-    if (id && studentMap[id]) {
-      checkLocation(id);
-    }
-  }, 60000);
-};
 
 function saveAndProceed() {
   const id = document.getElementById("regInput").value.trim();
