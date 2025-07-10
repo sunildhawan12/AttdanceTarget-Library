@@ -26,8 +26,17 @@ const historyUrl = "https://script.google.com/macros/s/AKfycbwYMb6IVNNSVO6E70ujD
 
 const statusMsg = document.getElementById("statusMsg");
 
-
 window.onload = () => {
+  const today = new Date().toLocaleDateString("en-GB");
+  const lastInDate = localStorage.getItem("lastInDate");
+
+  // ✅ Sirf attendance ko reset karo, ID ko nahi
+  if (lastInDate !== today) {
+    localStorage.removeItem("attendanceStatus");
+    localStorage.removeItem("firstInTime");
+    localStorage.removeItem("lastInDate");
+  }
+
   const savedId = localStorage.getItem("regId");
   if (savedId && studentMap[savedId]) {
     document.getElementById("loginSection").style.display = "none";
