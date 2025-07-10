@@ -95,20 +95,34 @@ function checkLocation(id) {
     const firstInTime = localStorage.getItem("firstInTime");
 
     if (dist <= radius) {
-      if (!todayIn) {
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString();
+    if (!todayIn) {
+  // ✅ पहली बार IN attendance mark करें
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString();
 
-        localStorage.setItem("firstInTime", timeStr);
-        localStorage.setItem("attendanceStatus", "IN");
-        localStorage.setItem("lastInDate", today);
+  // 👉 Save IN time in localStorage
+  localStorage.setItem("firstInTime", timeStr);
+  localStorage.setItem("attendanceStatus", "IN");
+  localStorage.setItem("lastInDate", today);
 
-        statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी "🟢 <b>IN</b>" उपस्थिति दर्ज की जा रही है - समय: ⏰${timeStr}`;
-        markAttendanceSilent("IN");
-      } else {
-        const displayTime = firstInTime || todayIn.time;
-        statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी "🟢 <b>IN</b>" उपस्थिति पहले ही <br>⏰${displayTime} पर दर्ज की जा चुकी है।`;
-      }
+  statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी "🟢 <b>IN</b>" उपस्थिति दर्ज की जा रही है - समय: ⏰${timeStr}`;
+  markAttendanceSilent("IN");
+
+} else {
+  // ✅ Google Sheet में पहले से मौजूद IN attendance को दिखाएं
+  let savedTime = localStorage.getItem("firstInTime");
+
+  // 👉 अगर localStorage में टाइम नहीं है, तो Google Sheet वाला time use करें
+  if (!savedTime) {
+    savedTime = todayIn.time;
+    localStorage.setItem("firstInTime", savedTime);
+    localStorage.setItem("attendanceStatus", "IN");
+    localStorage.setItem("lastInDate", today);
+  }
+
+  statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी "🟢 <b>IN</b>" उपस्थिति पहले ही <br>⏰${savedTime} पर दर्ज की जा चुकी है।`;
+}
+
     } else {
       if (todayIn && dist >= 0.5) {
         const now = new Date();
