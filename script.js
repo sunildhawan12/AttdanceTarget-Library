@@ -1,9 +1,6 @@
-// ✅ Optimized Auto Attendance with Fixed IN Display Time & Conditional OUT
-
 const allowedLat = 26.486691442317298;
 const allowedLng = 74.63343361051672;
 const radius = 0.05;
-let historyData = []; // 👈 यह script के सबसे ऊपर होना चाहिए
 
 const studentMap = {
   "101": "Sunil Dhawan",
@@ -27,10 +24,12 @@ const historyUrl = "https://script.google.com/macros/s/AKfycbwYMb6IVNNSVO6E70ujD
 
 const statusMsg = document.getElementById("statusMsg");
 
-
 window.onload = () => {
   const today = new Date().toLocaleDateString("en-GB");
   const lastInDate = localStorage.getItem("lastInDate");
+  const savedId = localStorage.getItem("regId");
+  const firstInTime = localStorage.getItem("firstInTime");
+  const attendanceStatus = localStorage.getItem("attendanceStatus");
 
   if (lastInDate !== today) {
     localStorage.removeItem("attendanceStatus");
@@ -38,11 +37,16 @@ window.onload = () => {
     localStorage.removeItem("lastInDate");
   }
 
-  const savedId = localStorage.getItem("regId");
   if (savedId && studentMap[savedId]) {
     document.getElementById("loginSection").style.display = "none";
     document.getElementById("attendanceSection").style.display = "block";
-    checkLocation(savedId);
+
+    if (attendanceStatus === "IN" && firstInTime) {
+      const name = studentMap[savedId];
+      statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी "🟢 <b>IN</b>" उपस्थिति पहले ही <br>⏰${firstInTime} पर दर्ज की जा चुकी है।`;
+    } else {
+      checkLocation(savedId);
+    }
   }
 
   setInterval(() => {
@@ -66,13 +70,10 @@ function getDistance(lat1, lon1, lat2, lon2) {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) *
-    Math.cos(lat2 * Math.PI / 180) *
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
     Math.sin(dLon / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 
 function checkLocation(id) {
@@ -82,40 +83,39 @@ function checkLocation(id) {
     return;
   }
 
-  navigator.geolocation.getCurrentPosition(pos => {
+  navigator.geolocation.getCurrentPosition(async pos => {
     const dist = getDistance(pos.coords.latitude, pos.coords.longitude, allowedLat, allowedLng);
     const name = studentMap[id];
     const today = new Date().toLocaleDateString("en-GB");
 
+    const response = await fetch(`${historyUrl}?type=history&id=${id}`);
+    const history = await response.json();
+    const todayIn = history.find(e => e.date === today && e.status === "IN");
+
+    const firstInTime = localStorage.getItem("firstInTime");
+
     if (dist <= radius) {
-      if (localStorage.getItem("attendanceStatus") !== "IN") {
+      if (!todayIn) {
         const now = new Date();
         const timeStr = now.toLocaleTimeString();
+
+        localStorage.setItem("firstInTime", timeStr);
         localStorage.setItem("attendanceStatus", "IN");
         localStorage.setItem("lastInDate", today);
-        localStorage.setItem("firstInTime", timeStr);
 
-        statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी \"🟢 <b>IN</b>\" उपस्थिति दर्ज की गई है - समय:<br> ⏰${timeStr}`;
+        statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी "🟢 <b>IN</b>" उपस्थिति दर्ज की जा रही है - समय: ⏰${timeStr}`;
         markAttendanceSilent("IN");
       } else {
-        const timeStr = localStorage.getItem("firstInTime") || "पहले";
-        statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी \"🟢 <b>IN</b>\" उपस्थिति पहले ही <br>⏰${timeStr} पर दर्ज की जा चुकी है।`;
+        const displayTime = firstInTime || todayIn.time;
+        statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी "🟢 <b>IN</b>" उपस्थिति पहले ही <br>⏰${displayTime} पर दर्ज की जा चुकी है।`;
       }
     } else {
-      const lastInDate = localStorage.getItem("lastInDate");
-
-      if (
-        localStorage.getItem("attendanceStatus") === "IN" &&
-        lastInDate === today &&
-        dist >= 0.5
-      ) {
+      if (todayIn && dist >= 0.5) {
         const now = new Date();
         const timeStr = now.toLocaleTimeString();
-        localStorage.setItem("attendanceStatus", "OUT");
 
-        statusMsg.innerHTML = `❌ <b>${name}</b>, आप Library क्षेत्र से <b>${dist.toFixed(2)} km</b> दूर हैं!<br> आपकी "🔴OUT" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}`;
+        statusMsg.innerHTML = `❌ <b>${name}</b>, आप Library क्षेत्र से <b>${dist.toFixed(2)} km</b> दूर हैं!<br>🔴 आपकी "OUT" उपस्थिति दर्ज की जा रही है - समय: ⏰${timeStr}`;
         markAttendanceSilent("OUT");
-
       } else if (dist < 0.5) {
         statusMsg.innerHTML = `⚠️ <b>${name}</b>, आप Library से थोड़ी ही दूरी पर हैं (📏 ${dist.toFixed(2)} km)। OUT तभी लगेगा जब दूरी 0.5 km से ज़्यादा हो।`;
       } else {
@@ -132,18 +132,14 @@ function markAttendanceSilent(status) {
   const id = localStorage.getItem("regId");
   if (!id) return;
 
-  if (status === "IN") {
-    localStorage.setItem("attendanceStatus", "IN");
-    localStorage.setItem("lastInDate", new Date().toLocaleDateString("en-GB"));
-  }
-
   const formData = new URLSearchParams({ ID: id, Status: status, Location: "auto" });
+
   fetch(URL, { method: "POST", body: formData })
     .then(res => {
       if (res.ok && status === "IN") {
-        retryHistoryFetch(0, status);
+        // No need to retry. Time already saved in localStorage.
       } else if (res.ok && status === "OUT") {
-        showHistory();
+        // Optional: handle OUT history
       }
     })
     .catch(err => console.error("❌ fetch error:", err));
