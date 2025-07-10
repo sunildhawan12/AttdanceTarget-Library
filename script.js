@@ -3,9 +3,10 @@
 const allowedLat = 26.486691442317298;
 const allowedLng = 74.63343361051672;
 const radius = 0.05;
+let historyData = []; // 👈 यह script के सबसे ऊपर होना चाहिए
 
 const studentMap = {
-  "101": "Sunil",
+  "101": "Sunil Dhawan",
   "102": "Arjun Ram",
   "103": "Suheel",
   "104": "Rajesh",
@@ -26,11 +27,11 @@ const historyUrl = "https://script.google.com/macros/s/AKfycbwYMb6IVNNSVO6E70ujD
 
 const statusMsg = document.getElementById("statusMsg");
 
+
 window.onload = () => {
   const today = new Date().toLocaleDateString("en-GB");
   const lastInDate = localStorage.getItem("lastInDate");
 
-  // ✅ Sirf attendance ko reset karo, ID ko nahi
   if (lastInDate !== today) {
     localStorage.removeItem("attendanceStatus");
     localStorage.removeItem("firstInTime");
@@ -51,7 +52,6 @@ window.onload = () => {
     }
   }, 60000);
 };
-
 
 function saveAndProceed() {
   const id = document.getElementById("regInput").value.trim();
@@ -74,6 +74,7 @@ function getDistance(lat1, lon1, lat2, lon2) {
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
+
 function checkLocation(id) {
   statusMsg.innerHTML = "📡 Location check हो रही है...";
   if (!navigator.geolocation) {
@@ -98,35 +99,34 @@ function checkLocation(id) {
         markAttendanceSilent("IN");
       } else {
         const timeStr = localStorage.getItem("firstInTime") || "पहले";
-        statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी उपस्थिति पहले ही ⏰${timeStr} पर दर्ज की जा चुकी है।`;
+        statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी \"🟢 <b>IN</b>\" उपस्थिति पहले ही <br>⏰${timeStr} पर दर्ज की जा चुकी है।`;
       }
-    }  else {
-  const lastInDate = localStorage.getItem("lastInDate");
+    } else {
+      const lastInDate = localStorage.getItem("lastInDate");
 
-  if (
-    localStorage.getItem("attendanceStatus") === "IN" &&
-    lastInDate === today &&
-    dist >= 0.5 // 👉 500 meters condition
-  ) {
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString();
-    localStorage.setItem("attendanceStatus", "OUT");
+      if (
+        localStorage.getItem("attendanceStatus") === "IN" &&
+        lastInDate === today &&
+        dist >= 0.5
+      ) {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString();
+        localStorage.setItem("attendanceStatus", "OUT");
 
-    statusMsg.innerHTML = `❌ <b>${name}</b>, आप Library क्षेत्र से <b>${dist.toFixed(2)} km</b> दूर हैं!<br>🔴 आपकी "OUT" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}`;
-    markAttendanceSilent("OUT");
+        statusMsg.innerHTML = `❌ <b>${name}</b>, आप Library क्षेत्र से <b>${dist.toFixed(2)} km</b> दूर हैं!<br> आपकी "🔴OUT" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}`;
+        markAttendanceSilent("OUT");
 
-  } else if (dist < 0.5) {
-    statusMsg.innerHTML = `⚠️ <b>${name}</b>, आप Library से थोड़ी ही दूरी पर हैं (📏 ${dist.toFixed(2)} km)। OUT तभी लगेगा जब दूरी 0.5 km से ज़्यादा हो।`;
-  } else {
-    statusMsg.innerHTML = `❌ आप Library क्षेत्र के बाहर हैं,<br>लेकिन आपकी "IN" उपस्थिति नहीं मिली इसलिए "OUT" नहीं की गई।`;
-  }
-}
+      } else if (dist < 0.5) {
+        statusMsg.innerHTML = `⚠️ <b>${name}</b>, आप Library से थोड़ी ही दूरी पर हैं (📏 ${dist.toFixed(2)} km)। OUT तभी लगेगा जब दूरी 0.5 km से ज़्यादा हो।`;
+      } else {
+        statusMsg.innerHTML = `❌ आप Library क्षेत्र के बाहर हैं,<br>लेकिन आपकी "IN" उपस्थिति नहीं मिली इसलिए "OUT" नहीं की गई।`;
+      }
+    }
 
   }, err => {
     statusMsg.innerHTML = `❌ Error: ${err.message}`;
   });
 }
-
 
 function markAttendanceSilent(status) {
   const id = localStorage.getItem("regId");
@@ -140,7 +140,6 @@ function markAttendanceSilent(status) {
   const formData = new URLSearchParams({ ID: id, Status: status, Location: "auto" });
   fetch(URL, { method: "POST", body: formData })
     .then(res => {
-      console.log(`✅ ${status} request response`, res.ok);
       if (res.ok && status === "IN") {
         retryHistoryFetch(0, status);
       } else if (res.ok && status === "OUT") {
@@ -149,6 +148,7 @@ function markAttendanceSilent(status) {
     })
     .catch(err => console.error("❌ fetch error:", err));
 }
+
 function manualOut() {
   const id = localStorage.getItem("regId");
   if (!id) return;
@@ -158,7 +158,6 @@ function manualOut() {
   const lastInDate = localStorage.getItem("lastInDate");
   const status = localStorage.getItem("attendanceStatus");
 
-  // ✅ OUT तभी मान्य जब आज IN किया हो और अभी तक OUT ना हुआ हो
   if (lastInDate !== today || status !== "IN") {
     statusMsg.innerHTML = `⚠️ <b>${name}</b>, आपकी "IN" उपस्थिति नहीं मिली है। पहले IN करें फिर OUT करें।`;
     return;
@@ -168,10 +167,9 @@ function manualOut() {
   const timeStr = now.toLocaleTimeString();
   localStorage.setItem("attendanceStatus", "OUT");
 
-  statusMsg.innerHTML = `🔴 आप Manual रूप से "OUT" हो गए हैं!<br>🔴 आपकी "OUT" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}`;
+  statusMsg.innerHTML = ` आप Manual रूप से "🔴OUT" हो गए हैं!<br> आपकी "🔴OUT" उपस्थिति दर्ज की गई है - समय:<br> ⏰${timeStr}`;
   markAttendanceSilent("OUT");
 }
-
 
 function showHistory() {
   const id = localStorage.getItem("regId");
@@ -184,19 +182,19 @@ function showHistory() {
   hb.innerHTML = `<tr><td colspan="4" style="text-align:center;"><span class="spinner"></span> कृपया प्रतीक्षा करें...</td></tr>`;
   document.getElementById("historyModal").style.display = "flex";
 
-  setTimeout(() => {
-    fetch(`${historyUrl}?type=history&id=${id}`)
-      .then(res => res.json())
-      .then(data => {
-        loaderDiv.innerHTML = "";
-        renderHistoryTable(data);
-      })
-      .catch(() => {
-        loaderDiv.innerHTML = "❌ इतिहास लोड करने में त्रुटि हुई!";
-        hb.innerHTML = "<tr><td colspan='4'>❌ इतिहास लोड करने में विफल!</td></tr>";
-      });
-  }, 1000);
+  fetch(`${historyUrl}?type=history&id=${id}`)
+    .then(res => res.json())
+    .then(data => {
+      historyData = data; // 👈 global variable में save करो
+      loaderDiv.innerHTML = "";
+      renderHistoryTable(historyData); // 👈 render with global data
+    })
+    .catch(() => {
+      loaderDiv.innerHTML = "❌ इतिहास लोड करने में त्रुटि हुई!";
+      hb.innerHTML = "<tr><td colspan='4'>❌ इतिहास लोड करने में विफल!</td></tr>";
+    });
 }
+
 
 function retryHistoryFetch(retry, status) {
   const id = localStorage.getItem("regId");
@@ -205,6 +203,7 @@ function retryHistoryFetch(retry, status) {
     .then(data => {
       const today = new Date().toLocaleDateString("en-GB");
       if (data.some(e => e.date === today && e.status === status)) {
+        historyData = data;
         renderHistoryTable(data);
         document.getElementById("historyModal").style.display = "flex";
       } else if (retry < 5) {
@@ -215,12 +214,13 @@ function retryHistoryFetch(retry, status) {
     })
     .catch(err => console.error("❌ retryHistoryFetch error:", err));
 }
-
 function convertToInputFormat(dateStr) {
-  const parts = dateStr.split("-");
+  const parts = dateStr.split("/"); // MM/DD/YYYY
   if (parts.length !== 3) return "";
-  return `${parts[2]}-${parts[1]}-${parts[0]}`;
+  const [mm, dd, yyyy] = parts;
+  return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`; // YYYY-MM-DD
 }
+
 
 function renderHistoryTable(data) {
   const hb = document.getElementById("historyTableBody");
