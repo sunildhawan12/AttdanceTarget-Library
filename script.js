@@ -1,3 +1,6 @@
+// ✅ Smart Attendance System (LocalStorage-only IN restriction with OUT block & auto history)
+// ✅ Smart Attendance System (LocalStorage-only IN restriction with OUT block & auto history)
+
 const allowedLat = 26.486691442317298;
 const allowedLng = 74.63343361051672;
 const radius = 0.05;
@@ -16,45 +19,28 @@ const studentMap = {
   "469": "Mahendra Gahlot",
   "420": "Rahul Rawat",
   "506": "kana ram",
-  "423": "Ramniwash",
+  "423": "Ramniwash"
 };
 
 const URL = "https://script.google.com/macros/s/AKfycbzhR-60-AUw2gL6_8ro7Dm3arl0exFNJ0a3n0MYPE-r-s4YwLrJDkJsT31mYk9LqqG92g/exec";
 const historyUrl = "https://script.google.com/macros/s/AKfycbwYMb6IVNNSVO6E70ujDfO3x1x7G2sZX44X37MpTFiuBGysDNScXmsbZxuZUv-qJfXA/exec";
-
 const statusMsg = document.getElementById("statusMsg");
 
+// 🔁 Reset logic if day changed
+const today = new Date().toLocaleDateString("en-GB");
+if (localStorage.getItem("lastActionDate") !== today) {
+  localStorage.removeItem("attendanceStatus");
+  localStorage.removeItem("firstInTime");
+  localStorage.setItem("lastActionDate", today);
+}
+
 window.onload = () => {
-  const today = new Date().toLocaleDateString("en-GB");
-  const lastInDate = localStorage.getItem("lastInDate");
   const savedId = localStorage.getItem("regId");
-  const firstInTime = localStorage.getItem("firstInTime");
-  const attendanceStatus = localStorage.getItem("attendanceStatus");
-
-  if (lastInDate !== today) {
-    localStorage.removeItem("attendanceStatus");
-    localStorage.removeItem("firstInTime");
-    localStorage.removeItem("lastInDate");
-  }
-
   if (savedId && studentMap[savedId]) {
     document.getElementById("loginSection").style.display = "none";
     document.getElementById("attendanceSection").style.display = "block";
-
-    if (attendanceStatus === "IN" && firstInTime) {
-      const name = studentMap[savedId];
-      statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी "🟢 <b>IN</b>" उपस्थिति पहले ही <br>⏰${firstInTime} पर दर्ज की जा चुकी है।`;
-    } else {
-      checkLocation(savedId);
-    }
+    checkLocation(savedId);
   }
-
-  setInterval(() => {
-    const id = localStorage.getItem("regId");
-    if (id && studentMap[id]) {
-      checkLocation(id);
-    }
-  }, 60000);
 };
 
 function saveAndProceed() {
@@ -75,87 +61,67 @@ function getDistance(lat1, lon1, lat2, lon2) {
     Math.sin(dLon / 2) ** 2;
   return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
-
 function checkLocation(id) {
+  const name = studentMap[id];
+  const today = new Date().toLocaleDateString("en-GB");
+  const status = localStorage.getItem("attendanceStatus");
+  const lastDate = localStorage.getItem("lastActionDate");
+
+  // ✅ अगर पहले ही OUT हो चुका है
+  if (lastDate === today && status === "OUT") {
+    statusMsg.innerHTML = `❌ <b>${name}</b>, आप पहले ही '🔴OUT' और 🟢'IN' हो चुके हैं! दोबारा अनुमत नहीं है।`;
+    showHistory();
+    return;
+  }
+
+  // ✅ अगर पहले ही IN हो चुका है (OUT नहीं हुआ)
+  if (lastDate === today && status === "IN") {
+    const time = localStorage.getItem("firstInTime");
+    statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप पहले ही "🟢IN" हो चुके हैं<br>⏰ समय: ${time}`;
+    return;
+  }
+
+  // 📍 Location check start
   statusMsg.innerHTML = "📡 Location check हो रही है...";
   if (!navigator.geolocation) {
     statusMsg.innerHTML = "❌ Location supported नहीं है।";
     return;
   }
 
-  navigator.geolocation.getCurrentPosition(async pos => {
+  navigator.geolocation.getCurrentPosition(pos => {
     const dist = getDistance(pos.coords.latitude, pos.coords.longitude, allowedLat, allowedLng);
-    const name = studentMap[id];
-    const today = new Date().toLocaleDateString("en-GB");
-
-    const response = await fetch(`${historyUrl}?type=history&id=${id}`);
-    const history = await response.json();
-    const todayIn = history.find(e => e.date === today && e.status === "IN");
-
-    const firstInTime = localStorage.getItem("firstInTime");
 
     if (dist <= radius) {
-    if (!todayIn) {
-  // ✅ पहली बार IN attendance mark करें
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString();
+      // ✅ Mark IN
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString();
 
-  // 👉 Save IN time in localStorage
-  localStorage.setItem("firstInTime", timeStr);
-  localStorage.setItem("attendanceStatus", "IN");
-  localStorage.setItem("lastInDate", today);
+      localStorage.setItem("attendanceStatus", "IN");
+      localStorage.setItem("lastActionDate", today);
+      localStorage.setItem("firstInTime", timeStr);
 
-  statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी "🟢 <b>IN</b>" उपस्थिति दर्ज की जा रही है - समय: ⏰${timeStr}`;
-  markAttendanceSilent("IN");
-
-} else {
-  // ✅ Google Sheet में पहले से मौजूद IN attendance को दिखाएं
-  let savedTime = localStorage.getItem("firstInTime");
-
-  // 👉 अगर localStorage में टाइम नहीं है, तो Google Sheet वाला time use करें
-  if (!savedTime) {
-    savedTime = todayIn.time;
-    localStorage.setItem("firstInTime", savedTime);
-    localStorage.setItem("attendanceStatus", "IN");
-    localStorage.setItem("lastInDate", today);
-  }
-
-  statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी "🟢 <b>IN</b>" उपस्थिति पहले ही <br>⏰${savedTime} पर दर्ज की जा चुकी है।`;
-}
-
+      statusMsg.innerHTML = `✅ Hello <b style="color:#ff009d">${name}</b>, आप Library क्षेत्र के अंदर हैं!<br>✅ आपकी "🟢IN" उपस्थिति दर्ज की गई है - समय: ⏰${timeStr}`;
+      markAttendanceSilent("IN");
+      setTimeout(showHistory, 2000);
     } else {
-      if (todayIn && dist >= 0.5) {
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString();
-
-        statusMsg.innerHTML = `❌ <b>${name}</b>, आप Library क्षेत्र से <b>${dist.toFixed(2)} km</b> दूर हैं!<br>🔴 आपकी "OUT" उपस्थिति दर्ज की जा रही है - समय: ⏰${timeStr}`;
-        markAttendanceSilent("OUT");
-      } else if (dist < 0.5) {
-        statusMsg.innerHTML = `⚠️ <b>${name}</b>, आप Library से थोड़ी ही दूरी पर हैं (📏 ${dist.toFixed(2)} km)। OUT तभी लगेगा जब दूरी 0.5 km से ज़्यादा हो।`;
-      } else {
-        statusMsg.innerHTML = `❌ आप Library क्षेत्र के बाहर हैं,<br>लेकिन आपकी "IN" उपस्थिति नहीं मिली इसलिए "OUT" नहीं की गई।`;
-      }
+      statusMsg.innerHTML = `❌ आप Library क्षेत्र से बाहर हैं (📏 ${dist.toFixed(2)} km)। IN उपस्थिति नहीं हो सकती।`;
     }
 
   }, err => {
-    statusMsg.innerHTML = `❌ Error: ${err.message}`;
+    statusMsg.innerHTML = `❌ Location error: ${err.message}`;
   });
 }
+
+
+// ❗ Other functions remain unchanged — markAttendanceSilent, showHistory, etc.
+
 
 function markAttendanceSilent(status) {
   const id = localStorage.getItem("regId");
   if (!id) return;
-
   const formData = new URLSearchParams({ ID: id, Status: status, Location: "auto" });
-
   fetch(URL, { method: "POST", body: formData })
-    .then(res => {
-      if (res.ok && status === "IN") {
-        // No need to retry. Time already saved in localStorage.
-      } else if (res.ok && status === "OUT") {
-        // Optional: handle OUT history
-      }
-    })
+    .then(res => console.log("✔ Attendance submitted"))
     .catch(err => console.error("❌ fetch error:", err));
 }
 
@@ -164,12 +130,10 @@ function manualOut() {
   if (!id) return;
 
   const name = studentMap[id];
-  const today = new Date().toLocaleDateString("en-GB");
-  const lastInDate = localStorage.getItem("lastInDate");
-  const status = localStorage.getItem("attendanceStatus");
+  const attendanceStatus = localStorage.getItem("attendanceStatus");
 
-  if (lastInDate !== today || status !== "IN") {
-    statusMsg.innerHTML = `⚠️ <b>${name}</b>, आपकी "IN" उपस्थिति नहीं मिली है। पहले IN करें फिर OUT करें।`;
+  if (attendanceStatus !== "IN") {
+    statusMsg.innerHTML = `⚠️ <b>${name}</b>, आपकी \"IN\" उपस्थिति नहीं मिली है। पहले IN करें फिर OUT करें।`;
     return;
   }
 
@@ -177,8 +141,9 @@ function manualOut() {
   const timeStr = now.toLocaleTimeString();
   localStorage.setItem("attendanceStatus", "OUT");
 
-  statusMsg.innerHTML = ` आप Manual रूप से "🔴OUT" हो गए हैं!<br> आपकी "🔴OUT" उपस्थिति दर्ज की गई है - समय:<br> ⏰${timeStr}`;
+  statusMsg.innerHTML = `🔴 आप Manual रूप से \"OUT\" हो गए हैं!<br>\"OUT\" उपस्थिति दर्ज की गई है - ⏰${timeStr}`;
   markAttendanceSilent("OUT");
+  setTimeout(showHistory, 1500);
 }
 
 function showHistory() {
