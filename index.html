@@ -10,25 +10,28 @@
 <body>
 
 <div class="main-wrapper">
+   <img src="bgremove.png" alt="" style="height: 50px;width: 50px;">
   <marquee behavior="" direction="">
-    <h2 class="fade-slide-in" style="color: black">🎯 TARGET PLUS LIBRARY</h2>
+   
+    <h2 class="fade-slide-in" style="color: black; font-style: inherit; color: #2c3e50;" >🎯 RUDRA ACADEMY THE SCHOOL</h2>
   </marquee>
  
  
   <h2>📍 <b>Smart Attendance</b></h2>
 
   <div id="loginSection">
-    <input type="text" id="regInput" placeholder="Enter your Reg.No">
+    <input type="text" id="regInput" placeholder="Enter your Id">
     <button style="width: 310px;" class="green-btn" onclick="saveAndProceed()">Submit</button>
   </div>
 
   <div id="attendanceSection" style="display: none;">
     <p id="statusMsg">📡 Checking location...</p>
     <div class="btn-row">
-    
-      <button id="outBtn" class="out-btn" onclick="manualOut()">
+     
+        <button id="outBtn" class="out-btn" onclick="manualOut()">
         <span class="circle red-circle"></span>OUT
       </button>
+      
     </div>
     <button style="width: 310px;" class="green-btn" onclick="showHistory()">📅 Show History</button>
   </div>
@@ -37,7 +40,7 @@
     <button style="width: 310px;" class="orange-btn"><i class="fas fa-user"></i>Create Account</button>
     </a>
   <br>
-<div id="loaderMsg"  style="text-align:center; margin-top:10px; color: #2c3e50;"></div>
+  <div id="loaderMsg"  style="text-align:center; margin-top:10px; color: #2c3e50;"></div>
 
   <div id="historyModal" style="
   display: none;
@@ -64,13 +67,14 @@
     <h3 style="margin-bottom: 10px; color: #2c3e50;">📅 Attendance History</h3>
 
 <label for="filterDate" style="font-weight: bold;"> Date:</label>
-<input style="width: 150px;" type="date" id="filterDate" onchange="renderHistoryTable(historyData);" />
+<input style="width: 100px;" type="date" id="filterDate" onchange="renderHistoryTable(historyData)" />
+
 
     <div style="overflow-x: auto;">
-      <table style="width: 100%; border-collapse: collapse; border: 2px solid black;">
+      <table style="width: 100%; border-collapse: collapse; border: 2px solid black; font-size: 11px;">
         <thead>
           <tr  style="background: #eeeb59; border: 1px solid black;">
-            <th style="padding: 10px; border: 1px solid black;">Name/Phone</th>
+            <th style="padding: 7px; border: 1px solid black;">Name/Phone</th>
             <th style="padding: 10px; border: 1px solid black;">📅Date</th>
             <th style="padding: 10px; border: 1px solid black;">Time</th>
             <th style="padding: 10px; border: 1px solid black;">Status</th>
@@ -78,7 +82,6 @@
         </thead>
         <tbody style="border: 1px solid black;" id="historyTableBody"></tbody>
       </table>
-     
     </div>
 
     <button onclick="document.getElementById('historyModal').style.display='none'" style="
