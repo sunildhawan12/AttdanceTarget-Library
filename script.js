@@ -45,7 +45,7 @@ window.onload = () => {
 
 function saveAndProceed() {
   const id = document.getElementById("regInput").value.trim();
-  if (!id || !studentMap[id]) return alert("❌ Invalid Reg.No!");
+  if (!id || !studentMap[id]) return alert("❌ Invalid ID!");
   localStorage.setItem("regId", id);
   document.getElementById("loginSection").style.display = "none";
   document.getElementById("attendanceSection").style.display = "block";
@@ -69,7 +69,7 @@ function checkLocation(id) {
 
   // ✅ अगर पहले ही OUT हो चुका है
   if (lastDate === today && status === "OUT") {
-    statusMsg.innerHTML = `❌ <b>${name}</b>,आज आप पहले ही 🟢'IN' ' और '🔴OUT'  हो चुके हैं! दोबारा अनुमत नहीं है।`;
+    statusMsg.innerHTML = `❌ <b style="color:#ff009d">${name}</b>, आप पहले ही 🟢'IN' और '🔴OUT' हो चुके हैं! दोबारा अनुमत नहीं है।`;
     showHistory();
     return;
   }
@@ -165,8 +165,8 @@ function showHistory() {
       renderHistoryTable(historyData); // 👈 render with global data
     })
     .catch(() => {
-      loaderDiv.innerHTML = "❌ इतिहास लोड करने में त्रुटि हुई!";
-      hb.innerHTML = "<tr><td colspan='4'>❌ इतिहास लोड करने में विफल!</td></tr>";
+      loaderDiv.innerHTML = "❌ History लोड करने में त्रुटि हुई!";
+      hb.innerHTML = "<tr><td colspan='4'>❌ History लोड करने में विफल!</td></tr>";
     });
 }
 
@@ -184,7 +184,7 @@ function retryHistoryFetch(retry, status) {
       } else if (retry < 5) {
         setTimeout(() => retryHistoryFetch(retry + 1, status), 2000);
       } else {
-        alert(`${status} history update नहीं हुआ, reload करके देखें।`);
+        alert(`${status} History update नहीं हुआ, reload करके देखें।`);
       }
     })
     .catch(err => console.error("❌ retryHistoryFetch error:", err));
