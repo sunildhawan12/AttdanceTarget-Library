@@ -1,8 +1,9 @@
 // ✅ Smart Attendance System (LocalStorage-only IN restriction with OUT block & auto history)
 // ✅ Smart Attendance System (LocalStorage-only IN restriction with OUT block & auto history)
 
-const allowedLat = 26.486691442317298;
-const allowedLng = 74.63343361051672;
+
+const allowedLat = 26.508982853131812;
+const allowedLng = 74.54039096484861;
 const radius = 0.05;
 
 const studentMap = {
