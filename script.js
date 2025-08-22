@@ -20,7 +20,7 @@ const studentMap = {
   "469": "Mahendra Gahlot",
   "420": "Rahul Rawat",
   "506": "kana ram",
-  "423": "Ramniwash"
+  "423": "Ramniwash",
   "Ajmer": "Yash"
 };
 
@@ -226,4 +226,5 @@ function renderHistoryTable(data) {
       </tr>`;
   });
 }
+
 
